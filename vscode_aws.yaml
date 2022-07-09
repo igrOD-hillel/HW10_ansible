@@ -1,0 +1,22 @@
+- hosts: AWS
+  become: yes
+
+  tasks:
+    - name: Installing code-server with script
+      shell: curl -fsSL https://code-server.dev/install.sh | sh
+
+    - name: Clone python home work
+      git:
+        repo: https://github.com/igrOD-hillel/DevOps_home_work.git
+        dest: /home/sysadmin/project/
+        clone: yes
+        update: yes
+  
+    - name: Add extensions to the code server
+      shell: 
+        code-server --install-extension redhat.ansible
+        code-server --install-extension kevinrose.vsc-python-indent
+        code-server --install-extension 4ops.terraform
+
+    - name: Run code server
+      shell: code-server --auth none /home/sysadmin/project/
