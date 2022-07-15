@@ -1,0 +1,112 @@
+- name: First ansible playbook
+  hosts: AWS
+  become: yes
+
+  tasks:
+    - name: Update all packages
+      yum:
+        name: '*'
+        state: latest
+        update_only: yes
+
+    - name: Ensure a list of yum packages are installed
+      yum:
+        name:
+          - python-pip
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+          - amazon-linux-extras
+        state: latest
+        update_cache: yes
+      
+    - name: Add extras repository
+      shell: yum-config-manager --enable extras
+
+    - name: Enable Some packages from amazon-linux-extras packages
+      shell: "amazon-linux-extras enable python3.8 ansible2 docker"
+
+    - name: clean yum metadata cache
+      command: yum clean metadata
+      args:
+        warn: false
+
+    - name: Ensure a list of yum packages are installed
+      yum:
+        name: "{{ packages }}"
+        state: latest
+        update_cache: yes
+      vars:
+        packages:
+        - python3.8
+        - ansible
+        - docker
+        - git
+
+    - name: Installing Python Docker modules
+      pip:
+        name:
+          - docker
+          - docker-compose
+
+    - name: Enable Docker CE service at startup
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Upgrade pip3
+      shell: "python3.8 -m pip install pip --upgrade"
+
+    - name: Ensure Python pip packages are installed
+      pip:
+        name: "{{ packages }}"
+        executable: /usr/local/bin/pip3.8
+      vars:
+        packages:
+        - boto
+        - boto3
+        - docker-compose
+
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+
+    - name: Clone a git repository
+      git:
+        repo: https://github.com/igrOD-hillel/HW_09_Docker.git
+        dest: /home/ec2-user/prod/
+        clone: yes
+        update: yes
+
+    - name: docker-compose
+      community.docker.docker_compose:
+        project_src: /home/ec2-user/prod/
+
+    - name: Gather facts about IP address
+      setup:
+        filter: ansible_default_ipv4.address
+
+    - name: Waiting for the web server to start
+      wait_for:
+        port: "80"
+        host: "{{ ansible_default_ipv4.address }}"
+        delay: 10
+        timeout: 60
+        state: started
+        msg: "Something wrong with the web server settings"
+
+    - name: Response 200 is OK and returned
+      uri:
+        url: "http://{{ ansible_default_ipv4.address }}"
+        method: GET
+        return_content: yes
+        body_format: json
+        status_code: 200
+      register: data
+
+    - name: Ip and status code information
+      debug:
+        msg: "The URL {{ data.url }} returned {{ data.status }}"

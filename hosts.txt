@@ -1,0 +1,8 @@
+[VBOX]
+vbox-test-host	ansible_host=192.168.0.10	ansible_user=sysadmin	ansible_password=12345
+
+[AWS]
+aws_test	ansible_host=3.66.190.56	ansible_user=ec2-user	ansible_ssh_private_key_file=/home/admin4ik/Documents/DevOps_HW/ssh-key/aws_test_ec2.pem
+
+
+# aws_test_host	ansible_host=18.184.213.67	ansible_user=ubuntu	ansible_ssh_private_key_file=/home/sysadmin/ansible/private_key/id_rsa.pub
